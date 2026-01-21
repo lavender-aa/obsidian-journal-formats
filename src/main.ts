@@ -39,7 +39,6 @@ export default class JournalFormats extends Plugin {
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status bar text');
 
-
 		// command: AddEvent
 		this.addCommand({
 			id: 'add-event',
@@ -54,9 +53,16 @@ export default class JournalFormats extends Plugin {
 			id: 'add-thought',
 			name: 'Add thought template',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection(getTimestamp();
+				editor.replaceSelection(getTimestamp());
 			}
 		})
+
+
+		// register editor extension for event behavior
+		this.registerEditorExtension([createNewEventEffect, eventField]);
+
+		// register editor extension for thought behavior
+		//TODO
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
@@ -83,4 +89,42 @@ function getTimestamp(): string {
 		let str: string = date.toLocaleString();
 		let time: string = str.slice(11, 15) + str.charAt(19).toLowerCase();
 		return (time.length == 5 ? ' ' : '') + '(' + time + ') ';
+}
+
+
+
+import {EditorState, StateField} from "@codemirror/state"
+
+// effect for creating events like lists
+const createNewEventEffect = StateEffect.define<string>();
+
+export const eventField = StateField.define<string>({
+	create(state: EditorState) {
+		return 0;
+	},
+
+	// if current line is an event and enter is pressed, make a new one below
+	update(oldState: string, transaction: Transaction): string {
+		let newState = oldState;
+
+	    // oldState is a line with an event: matches r"-  ?\(\d\d?:\d\d(a|p)\) .*\n?"
+		const eventPattern = /-  ?\(\d\d?:\d\d(a|p)\) .*\n?/;
+		if(!eventPatter.test(oldState)) {
+			return oldState;
+		}
+
+		// here: oldState is an event line
+		if(oldState.charAt(oldState.length - 1) == '\n') {
+			newState += '- ' + getTimestamp();
+		}
 	}
+})
+
+
+
+
+// effect for text wrapping for thoughts
+const wrapTextWithBarEffect = StateEffect.define();
+
+// oldstate is part of a thought: match r"( ?\(\d\d?:\d\d(a|p)\) |       \| ).*\n?"
+
